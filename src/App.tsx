@@ -30,7 +30,7 @@
               const numPages = pdf.numPages;
 
             let extractedText = '';
-            let extractedData=[]
+            const extractedData=[]
 
               for (let pageNum = 1; pageNum <= numPages; pageNum++) {
                   const page = await pdf.getPage(pageNum);
