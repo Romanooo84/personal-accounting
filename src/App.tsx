@@ -45,10 +45,9 @@
          }
 
           setLoading(true);
-          setText('');
+          setText([]);
 
-          let extractedText = '';
-          const extractedData = []
+          let extractedText = ''
           
           if (fileType === 'PDF') {
               try {
