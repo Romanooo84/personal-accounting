@@ -1,72 +1,116 @@
   import React, { useState } from 'react';
   import Tesseract from 'tesseract.js';
   import * as pdfjsLib from 'pdfjs-dist';
+  
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
 
   const App = () => {
-      const [pdfFile, setPdfFile] = useState<File | null>(null);
+      const [file, setfile] = useState<File | null>(null);
       const [text, setText] = useState('');
       const [loading, setLoading] = useState(false);
+      const [imageUrl, setImageUrl] = useState('')
+      const [fileType, setFileType] = useState<string>('')
     
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '../public/pdf.worker.mjs';
+    
 
       const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-          if (event.target.files && event.target.files[0]) {
-              setPdfFile(event.target.files[0]);
-          }
-      };
+    if (event.target.files && event.target.files[0]) {
+        const file = event.target.files[0];
+        if (file) {
+            const fileExtension = file.name.split('.').pop()?.toLowerCase();
+            if (fileExtension === 'pdf') {
+                setFileType('PDF');
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension || '')) {
+                setFileType('Image');
+            } else {
+                setFileType('Unknown');
+            }
+            setfile(file);
+        }
+    } else {
+        // Handle case when no file is selected or files are empty
+        setFileType('Unknown');
+    }
+};
 
       const extractTextFromPdf = async () => {
-          if (!pdfFile) {
-              alert('Please upload a PDF file first.');
+          if (!file) {
+              alert('Please upload a PDF or image file first.');
               return;
           }
+
+        if (fileType === 'Unknown') {
+        alert('Please upload a supported file type (PDF or Image).');
+        return;
+         }
 
           setLoading(true);
           setText('');
 
-          try {
-              const arrayBuffer = await pdfFile.arrayBuffer();
-              const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-              console.log(pdf)
-              const numPages = pdf.numPages;
+          let extractedText = '';
+          const extractedData = []
+          
+          if (fileType === 'PDF') {
+              try {
+                  const arrayBuffer = await file.arrayBuffer();
+                  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                  const numPages = pdf.numPages;
 
-            let extractedText = '';
-            const extractedData=[]
+            
 
-              for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                  const page = await pdf.getPage(pageNum);
-                  const viewport = page.getViewport({ scale: 1 });
-                  const canvas = document.createElement('canvas');
-                  const canvasContext = canvas.getContext('2d');
+                  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                      const page = await pdf.getPage(pageNum);
+                      const viewport = page.getViewport({ scale: 1 });
+                      const canvas = document.createElement('canvas');
+                      const canvasContext = canvas.getContext('2d');
 
-                  if (!canvasContext) continue;
+                      if (!canvasContext) continue;
 
-                  canvas.height = viewport.height;
-                  canvas.width = viewport.width;
+                      canvas.height = viewport.height;
+                      canvas.width = viewport.width;
 
-                  const renderContext = {
-                      canvasContext,
-                      viewport,
-                  };
+                      const renderContext = {
+                          canvasContext,
+                          viewport,
+                      };
 
-                  await page.render(renderContext).promise;
+                      await page.render(renderContext).promise;
 
-                  const dataUrl = canvas.toDataURL('image/png');
-
-                  // Use Tesseract.js to recognize text from the image
-                const { data } = await Tesseract.recognize(dataUrl, 'pol', {// Używamy folderu public/tessdata
-              logger: (info) => console.log(info), // Logowanie postępu
-                })
-                  extractedData.push(data.text + '\n ')
-                  extractedText += data.text + '\n';
+                      const dataUrl = canvas.toDataURL('image/png');
+                      setImageUrl(dataUrl)
+              
+                      // Use Tesseract.js to recognize text from the image
+                      const { data } = await Tesseract.recognize(dataUrl, 'pol', {
+                      })
+                      extractedData.push(data.text + '\n ')
+                      extractedText += data.text + '\n';
+                  }
+                  console.log(extractedData)
+                  console.log(extractedText)
+                  setText(extractedText);
+              } catch (error) {
+                  console.error('Error processing PDF:', error);
+              } finally {
+                  setLoading(false);
               }
-              console.log(extractedData)
-              console.log(extractedText)
-              setText(extractedText);
-          } catch (error) {
-              console.error('Error processing PDF:', error);
-          } finally {
-              setLoading(false);
+          }
+          else if (fileType === 'Image') {
+             const imageUrl = URL.createObjectURL(file);
+              setImageUrl(imageUrl);
+              
+              try {
+            const { data } = await Tesseract.recognize(imageUrl, 'pol', {
+                logger: (m) => console.log(m), // logowanie postępu procesu OCR
+            });
+
+            // Zapisujemy rozpoznany tekst
+            setText(data.text);
+        } catch (error) {
+            console.error('Error recognizing text from image:', error);
+        } finally {
+            setLoading(false);
+        }
+              
           }
       };
 
@@ -81,6 +125,7 @@
                   <h2>Extracted Text:</h2>
                   <pre>{text}</pre>
               </div>
+              {!!text && <img src={imageUrl} alt="Canvas to Image" />}
           </div>
       );
   };

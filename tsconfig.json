@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",  // or ESNext depending on your setup
     "module": "ESNext",  // or CommonJS depending on your bundler
-    "lib": ["dom", "es6"],  // Standard libraries for web and modern JS
+    "lib": ["dom", "es6", "es2016"],  // Standard libraries for web and modern JS
     "moduleResolution": "node",  // Node module resolution strategy
     "strict": true,  // Enable strict type-checking for better safety
     "jsx": "react-jsx",  // React JSX support (React 17 and higher)
