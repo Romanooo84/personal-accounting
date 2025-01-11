@@ -6,7 +6,7 @@
 
   const App = () => {
       const [file, setfile] = useState<File | null>(null);
-      const [text, setText] = useState('');
+      const [text, setText] = useState<string[]>([])
       const [loading, setLoading] = useState(false);
       const [imageUrl, setImageUrl] = useState('')
       const [fileType, setFileType] = useState<string>('')
@@ -82,12 +82,11 @@
                       // Use Tesseract.js to recognize text from the image
                       const { data } = await Tesseract.recognize(dataUrl, 'pol', {
                       })
-                      extractedData.push(data.text + '\n ')
-                      extractedText += data.text + '\n';
+                      extractedText += data.text;
                   }
-                  console.log(extractedData)
                   console.log(extractedText)
-                  setText(extractedText);
+                  const lines = extractedText.split('\n').filter(line => line.trim() !== '');
+                  setText(lines);
               } catch (error) {
                   console.error('Error processing PDF:', error);
               } finally {
@@ -103,8 +102,9 @@
                 logger: (m) => console.log(m), // logowanie postępu procesu OCR
             });
 
-            // Zapisujemy rozpoznany tekst
-            setText(data.text);
+            const extractedText=data.text
+            const lines = extractedText.split('\n').filter(line => line.trim() !== '');
+            setText(lines);
         } catch (error) {
             console.error('Error recognizing text from image:', error);
         } finally {
@@ -116,8 +116,8 @@
 
       return (
           <div className="App">
-              <h1>Extract Text from PDF</h1>
-              <input type="file" accept="application/pdf" onChange={handleFileChange} />
+              <h1>Extract Text from PDF or Image</h1>
+              <input type="file" accept=".pdf,image/*"  onChange={handleFileChange} />
               <button onClick={extractTextFromPdf} disabled={loading}>
                   {loading ? 'Processing...' : 'Extract Text'}
               </button>
@@ -125,6 +125,13 @@
                   <h2>Extracted Text:</h2>
                   <pre>{text}</pre>
               </div>
+               <div>
+        {!!text && text.map((line, index) => (
+          <button key={index} onClick={(e) => console.log(e.target)}>
+            {line}
+          </button>
+        ))}
+      </div>
               {!!text && <img src={imageUrl} alt="Canvas to Image" />}
           </div>
       );
