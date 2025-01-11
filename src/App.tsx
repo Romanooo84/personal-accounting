@@ -83,7 +83,6 @@
                       })
                       extractedText += data.text;
                   }
-                  console.log(extractedText)
                   const lines = extractedText.split('\n').filter(line => line.trim() !== '');
                   setText(lines);
               } catch (error) {
@@ -122,15 +121,13 @@
               </button>
               <div>
                   <h2>Extracted Text:</h2>
-                  <pre>{text}</pre>
-              </div>
-               <div>
-        {!!text && text.map((line, index) => (
+                   {!!text && text.map((line, index) => (
           <button key={index} onClick={(e) => console.log(e.target)}>
             {line}
           </button>
         ))}
-      </div>
+              </div>
+
               {!!text && <img src={imageUrl} alt="Canvas to Image" />}
           </div>
       );
