@@ -5,7 +5,7 @@
   const App = () => {
       const [pdfFile, setPdfFile] = useState<File | null>(null);
       const [text, setText] = useState('');
-    const [loading, setLoading] = useState(false);
+      const [loading, setLoading] = useState(false);
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = '../public/pdf.worker.mjs';
 
@@ -27,6 +27,7 @@
           try {
               const arrayBuffer = await pdfFile.arrayBuffer();
               const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+              console.log(pdf)
               const numPages = pdf.numPages;
 
             let extractedText = '';
