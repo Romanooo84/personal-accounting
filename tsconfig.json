@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES6",  // or ESNext depending on your setup
+    "module": "ESNext",  // or CommonJS depending on your bundler
+    "lib": ["dom", "es6"],  // Standard libraries for web and modern JS
+    "moduleResolution": "node",  // Node module resolution strategy
+    "strict": true,  // Enable strict type-checking for better safety
+    "jsx": "react-jsx",  // React JSX support (React 17 and higher)
+    "esModuleInterop": true,  // Allow importing CommonJS modules as ES modules
+    "skipLibCheck": true,  // Skip checking types of third-party declaration files
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": [
+      "node_modules/@types",  // Default type definitions
+      "src/types"  // Custom types folder
+    ],
+
+    "outDir": "./build"  // Output folder for compiled files
+  },
+  "include": [
+    "src/**/*",  // Include all source files (adjust to match your project)
+    "src/types/**/*"  // Include custom types folder
+  ],
+  "exclude": [
+    "node_modules",  // Exclude node_modules
+    "build"  // Exclude build folder from compilation
+  ]
+}
