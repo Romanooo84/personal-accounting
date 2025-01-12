@@ -19,7 +19,7 @@
   "include": [
     "src/**/*",  // Include all source files (adjust to match your project)
     "src/types/**/*"  // Include custom types folder
-  ],
+, "pdf.worker.mjs"  ],
   "exclude": [
     "node_modules",  // Exclude node_modules
     "build"  // Exclude build folder from compilation

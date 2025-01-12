@@ -1,136 +1,168 @@
-  import React, { useState } from 'react';
-  import Tesseract from 'tesseract.js';
-  import * as pdfjsLib from 'pdfjs-dist';
-  
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
-
-  const App = () => {
-      const [file, setfile] = useState<File | null>(null);
-      const [text, setText] = useState<string[]>([])
-      const [loading, setLoading] = useState(false);
-      const [imageUrl, setImageUrl] = useState('')
-      const [fileType, setFileType] = useState<string>('')
+    import React, { useEffect, useState } from 'react';
+    import * as pdfjsLib from 'pdfjs-dist';
+    import handleFileChange from './functions/handleFileChange';
+    import extractTextFromFile from './functions/extractTextFromFile';
     
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
     
-
-      const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-        const file = event.target.files[0];
-        if (file) {
-            const fileExtension = file.name.split('.').pop()?.toLowerCase();
-            if (fileExtension === 'pdf') {
-                setFileType('PDF');
-            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension || '')) {
-                setFileType('Image');
-            } else {
-                setFileType('Unknown');
-            }
-            setfile(file);
-        }
-    } else {
-        // Handle case when no file is selected or files are empty
-        setFileType('Unknown');
+    const companiesData = {
+        'Poczta Polska':{
+            name: 'POCZTA POLSKA',
+            paymentText: ['płatności', 'Termin płatności'],
+            valueText: ['do zapłaty', 'Pozostało do zapłaty']
+        },
+        'DD higiena':{
+            name: 'DDD',
+            paymentText: ['Prze'],
+            valueText: ['do zapłaty', 'Razem do zapłaty']
+        },
+    
     }
-};
 
-      const extractTextFromPdf = async () => {
-          if (!file) {
-              alert('Please upload a PDF or image file first.');
-              return;
-          }
+interface CompanyData{
+    name: string
+    paymentText: string[]
+    valueText:string[]
+    }
 
-        if (fileType === 'Unknown') {
-        alert('Please upload a supported file type (PDF or Image).');
-        return;
-         }
+    const App = () => {
+        const [file, setFile] = useState<File | null>(null);
+        const [text, setText] = useState<string[]>([])
+        const [loading, setLoading] = useState(false);
+        const [imageUrl, setImageUrl] = useState('')
+        const [fileType, setFileType] = useState<string>('')
+        const [foundInvoiceData, setFoundInvoiceData] = useState<JSX.Element | null>(null);
+        
+        
 
-          setLoading(true);
-          setText([]);
+        const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            const data = handleFileChange(event);
+            if (data) {
+                setFileType(data.fileType);
+                setFile(data.file);
+            }
+    };
 
-          let extractedText = ''
-          
-          if (fileType === 'PDF') {
-              try {
-                  const arrayBuffer = await file.arrayBuffer();
-                  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-                  const numPages = pdf.numPages;
-
-            
-
-                  for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                      const page = await pdf.getPage(pageNum);
-                      const viewport = page.getViewport({ scale: 1 });
-                      const canvas = document.createElement('canvas');
-                      const canvasContext = canvas.getContext('2d');
-
-                      if (!canvasContext) continue;
-
-                      canvas.height = viewport.height;
-                      canvas.width = viewport.width;
-
-                      const renderContext = {
-                          canvasContext,
-                          viewport,
-                      };
-
-                      await page.render(renderContext).promise;
-
-                      const dataUrl = canvas.toDataURL('image/png');
-                      setImageUrl(dataUrl)
-              
-                      // Use Tesseract.js to recognize text from the image
-                      const { data } = await Tesseract.recognize(dataUrl, 'pol', {
-                      })
-                      extractedText += data.text;
-                  }
-                  const lines = extractedText.split('\n').filter(line => line.trim() !== '');
-                  setText(lines);
-              } catch (error) {
-                  console.error('Error processing PDF:', error);
-              } finally {
-                  setLoading(false);
-              }
-          }
-          else if (fileType === 'Image') {
-             const imageUrl = URL.createObjectURL(file);
-              setImageUrl(imageUrl);
-              
-              try {
-            const { data } = await Tesseract.recognize(imageUrl, 'pol', {
-                logger: (m) => console.log(m), // logowanie postępu procesu OCR
-            });
-
-            const extractedText=data.text
-            const lines = extractedText.split('\n').filter(line => line.trim() !== '');
-            setText(lines);
-        } catch (error) {
-            console.error('Error recognizing text from image:', error);
-        } finally {
-            setLoading(false);
+        const extractText = async () => {
+            if (file) {
+                setLoading(true)
+                const data = await extractTextFromFile(file, fileType)
+                if (data && data.dataUrl && data.lines) {
+                    setImageUrl(data.dataUrl)
+                    setText(data.lines)
+                    setLoading(false)
+                }
+            }
         }
-              
-          }
-      };
 
-      return (
-          <div className="App">
-              <h1>Extract Text from PDF or Image</h1>
-              <input type="file" accept=".pdf,image/*"  onChange={handleFileChange} />
-              <button onClick={extractTextFromPdf} disabled={loading}>
-                  {loading ? 'Processing...' : 'Extract Text'}
-              </button>
-              <div>
-                  <h2>Extracted Text:</h2>
-                   {!!text && text.map((line, index) => (
-          <button key={index} onClick={(e) => console.log(e.target)}>
-            {line}
-          </button>
-        ))}
-              </div>
+        useEffect(() => {
+            let companyData: CompanyData | undefined;
+            for (const key in companiesData) {
+               text.find(company => {
+                    if (company.includes(companiesData[key as keyof typeof companiesData].name)) {
+                        companyData = companiesData[key as keyof typeof companiesData]
+                        console.log(companyData)
+                    }
+                }
+            )
+            }
+            
+            if (companyData) {
+                const companyName = companyData.name;
+                const payment = companyData.paymentText;
+                const value = companyData.valueText;
+                const invoiceData = {
+                    name: '',
+                    paymentDate: '',
+                    value: ''
+                }
 
-              {!!text && <img src={imageUrl} alt="Canvas to Image" />}
-          </div>
-      );
-  };
+                text.find(name => {
+                    if (name.includes(companyName)) {
+                        invoiceData.name = companyName;
+                        console.log(invoiceData);
+                        return true; // Znaleziono `companyName`, zakończ `find`
+                    }
+                    return false; // Kontynuuj szukanie
+                });
 
-  export default App;
+                text.find(paymenttext => {
+                    for (let i = 0; i < payment.length; i++) {
+
+                        if (paymenttext.includes(payment[i])) {
+                            const regex = /(\d{4}-\d{2}-\d{2})/
+                            const match = paymenttext.match(regex);
+                            if (match) {
+                                invoiceData.paymentDate = match[0];
+                            }
+                            console.log(invoiceData)
+                            return true; // Znaleziono `payment`, zakończ `find`
+                        }
+                    }
+                    return false; // Kontynuuj szukanie
+                });
+
+                text.find(amount => {
+                    for (let i = 0; i < value.length; i++) {
+
+                        if (amount.includes(value[i])) {
+                            const regex = /\d{1,4}(?:[\s,]?\d{5})*(?:[,.]\d+)?/g;
+                            const match = amount.match(regex);
+                            if (match) {
+                                invoiceData.value = match[0];
+                            }
+                            console.log(invoiceData)
+                            return true; // Znaleziono `payment`, zakończ `find`
+                        }
+                    }
+                    return false; // Kontynuuj szukanie
+                });
+                const foundData =
+                    <>
+                        <div>
+                            <p>Nazwa Firmy:</p>
+                            <p>{invoiceData.name}</p>
+                        </div>
+                        <div>
+                            <p>Kwota:</p>
+                            <p>{invoiceData.value}</p>
+                        </div>
+                        <div>
+                            <p>Termin płatności:</p>
+                            <p>{invoiceData.paymentDate}</p>
+                        </div>
+                    </>
+                setFoundInvoiceData(foundData)
+            }
+        }, [text]);
+
+
+
+        return (
+            <div className="App">
+                <h1>Extract Text from PDF or Image</h1>
+                <input type="file" accept=".pdf,image/*"  onChange={onChange} />
+                <button onClick={extractText} disabled={loading}>
+                    {loading ? 'Processing...' : 'Extract Text'}
+                </button>
+                 {foundInvoiceData && (
+                <div>
+                    <h2>Found Invoice Data:</h2>
+                    {foundInvoiceData}
+                </div>
+            )}
+                <div>
+                    <h2>Extracted Text:</h2>
+                    {!!text && text.map((line, index) => (
+            <button key={index} onClick={(e) => console.log(e.target)}>
+                {line}
+            </button>
+            ))}
+                </div>
+
+                {!!text && <img src={imageUrl} alt="Canvas to Image" />}
+            </div>
+        );
+    };
+
+    export default App;
