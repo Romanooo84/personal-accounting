@@ -8,14 +8,18 @@
     const companiesData = {
         'Poczta Polska':{
             name: ['"POCZTA', 'POLSKA'],
-            paymentText: ['Termin', 'płatności'],
-            valueText: ['Pozostało', 'do', 'zapłaty',':'],
+            paymentText: ['Termin', 'płatności:'],
+            valueText: ['Pozostało', 'do', 'zapłaty', ':'],
+            invoiceNo: ['Faktura'],
+            invoiceDate:['Data','wystawienia:'],
             fullName:'Poczta Polska'
         },
         'DD higiena':{
-            name: ['DDD'],
-            paymentText: ['Prze'],
-            valueText: ['do zapłaty', 'Razem do zapłaty'],
+            name: ['DDD-Higiena'],
+            paymentText: ['Forma','płatności','Termin','Kwota','przelew'],
+            valueText: ['Pozostaje:'],
+            invoiceNo: ['Faktura', 'VAT', 'nr'],
+            invoiceDate:['Data','wystawienia:'],
             fullName:'DD higiena'
         },
     
@@ -26,6 +30,8 @@ interface CompanyData{
     paymentText: string[]
     valueText:string[]
     fullName: string
+    invoiceDate:string[]
+    invoiceNo:string[]
     }
 
     const App = () => {
@@ -43,8 +49,7 @@ interface CompanyData{
             if (data) {
                 setFileType(data.fileType);
                 setFile(data.file);
-                console.log(data.file)
-            }
+                }
     };
 
         const extractText = async () => {
@@ -60,7 +65,6 @@ interface CompanyData{
         }
 
         useEffect(() => {
-            console.log('start')
             let companyData: CompanyData | undefined;
             let processStopped = false
             for (const key in companiesData) {
@@ -91,48 +95,147 @@ interface CompanyData{
             }
             
             if (companyData) {
-                const companyName = companyData.name;
+                const companyName: string = companyData.fullName;
                 const payment = companyData.paymentText;
                 const value = companyData.valueText;
+                const number = companyData.invoiceNo
+                const date = companyData.invoiceDate
+                let tempFindList:string[]=[]
                 const invoiceData = {
-                    name: companyData.fullName,
+                    name: companyName,
                     paymentDate: '',
-                    value: ''
+                    value: '',
+                    invoiceNo: '',
+                    invoiceDate: ''
                 }
 
-                text.find(paymenttext => {
-                    for (let i = 0; i < payment.length; i++) {
-                        if (paymenttext.includes(payment[i])) {
-                            const regex = /(\d{4}-\d{2}-\d{2})/
-                            const match = paymenttext.match(regex);
-                            if (match) {
-                                invoiceData.paymentDate = match[0];
+                let processStopped = false;
+
+                for (let i = 0; i < text.length; i++) {
+                    tempFindList.push(text[i]);
+                    if (tempFindList.length > payment.length) {
+                        tempFindList.shift();
+                    }
+                    for (let j = 0; j < payment.length; j++) {
+                        
+                        if (tempFindList[j] === payment[j]) {
+                            console.log(tempFindList)
+                            if (j + 1 === payment.length) {
+                                console.log(tempFindList)
+                                console.log(text[i])
+                                processStopped = true;
+                                invoiceData.paymentDate=text[i+1]
+                                break; 
                             }
-                            return true; 
+                        } else {
+                            break; 
                         }
                     }
-                    return false; 
-                });
+                    if (processStopped) {
+                        processStopped = false;
+                        tempFindList=[]
+                        break; 
+                    }
+                }
 
-                text.find(amount => {
-                    for (let i = 0; i < value.length; i++) {
-
-                        if (amount.includes(value[i])) {
-                            const regex = /\d{1,4}(?:[\s,]?\d{5})*(?:[,.]\d+)?/g;
-                            const match = amount.match(regex);
-                            if (match) {
-                                invoiceData.value = match[0];
+                for (let i = 0; i < text.length; i++) {
+                    tempFindList.push(text[i]);
+                    if (tempFindList.length > number.length) {
+                        tempFindList.shift();
+                    }
+                    for (let j = 0; j < number.length; j++) {
+                        
+                        if (tempFindList[j] === number[j]) {
+                            console.log(tempFindList)
+                            if (j + 1 === number.length) {
+  
+                                processStopped = true;
+                                invoiceData.invoiceNo=text[i+1]
+                                break; 
                             }
-                            return true; 
+                        } else {
+                            break; 
                         }
                     }
-                    return false;
-                });
+                    if (processStopped) {
+                        processStopped = false;
+                        tempFindList=[]
+                        break; 
+                    }
+                }
+
+                for (let i = 0; i < text.length; i++) {
+                    tempFindList.push(text[i]);
+                    if (tempFindList.length > date.length) {
+                        tempFindList.shift();
+                    }
+                    for (let j = 0; j < date.length; j++) {
+                        
+                        if (tempFindList[j] === date[j]) {
+                            console.log(tempFindList)
+                            if (j + 1 === date.length) {
+                                processStopped = true;
+                                invoiceData.invoiceDate=text[i+1]
+                                break; 
+                            }
+                        } else {
+                            break; 
+                        }
+                    }
+                    if (processStopped) {
+                        processStopped = false;
+                        tempFindList=[]
+                        break; 
+                    }
+                }
+
+
+                for (let i = 0; i < text.length; i++) {
+                    tempFindList.push(text[i]);
+                    if (tempFindList.length > value.length) {
+                        tempFindList.shift();
+                    }
+                    for (let j = 0; j < value.length; j++) {
+                        if (tempFindList[j] === value[j]) {
+                            if (j + 1 === value.length) {
+                                processStopped = true;                                
+                                let foundValue=''
+                                for (let k = i + 1; k < text.length; k++){
+                                    const formattedValue = text[k].replace(',', '.');
+                                    if (isNaN(Number(formattedValue))) {
+                                        invoiceData.value = foundValue
+                                       break
+                                    }
+                                    else {
+                                        foundValue += formattedValue
+                                    }
+                                }
+                                break; 
+                            }
+                        } else {
+                            break; 
+                        }
+                    }
+                    if (processStopped) {
+                        processStopped = false;
+                        tempFindList=[]
+                        break; 
+                    }
+                }
+                    
                 const foundData =
                     <>
                         <div>
                             <p>Nazwa Firmy:</p>
                             <p>{invoiceData.name}</p>
+                        </div>
+                         <div>
+                            <p>Numer fakury:</p>
+                            <p>{invoiceData.invoiceNo}</p>
+                        </div>
+                        <div>
+                            <p>Data fakury:</p>
+                            <p>{invoiceData.invoiceDate}</p>
                         </div>
                         <div>
                             <p>Kwota:</p>

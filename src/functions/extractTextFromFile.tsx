@@ -21,7 +21,6 @@ const extractTextFromFile = async (file: File, fileType: string) => {
             pdfToText(file)
                 .then(text => {
                     extractedText = text 
-                    console.log(extractedText)
                     lines = extractedText.split(' ').filter(line => line.trim() !== '');
                     console.log(lines)
                 })
@@ -33,12 +32,10 @@ const extractTextFromFile = async (file: File, fileType: string) => {
                     const arrayBuffer = await file.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
                     const numPages = pdf.numPages;
-                    console.log(numPages)
                     
                 
 
                     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                        console.log(pageNum)
                         const page = await pdf.getPage(pageNum);
                         const viewport = page.getViewport({ scale: 1 });
                         const canvas = document.createElement('canvas');
@@ -60,7 +57,6 @@ const extractTextFromFile = async (file: File, fileType: string) => {
                 
                         const { data } = await Tesseract.recognize(dataUrl, 'pol', {
                         })
-                        console.log(data.text)
                         extractedText += data.text;
                     }
                     //lines = extractedText.split('\n').filter(line => line.trim() !== '');
