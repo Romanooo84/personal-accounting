@@ -58,14 +58,12 @@ const extractTextFromFile = async (file: File, fileType: string) => {
 
                         dataUrl = canvas.toDataURL('image/png');
                 
-                        // Use Tesseract.js to recognize text from the image
                         const { data } = await Tesseract.recognize(dataUrl, 'pol', {
                         })
                         console.log(data.text)
                         extractedText += data.text;
                     }
-                    console.log(lines)
-                    lines = extractedText.split('\n').filter(line => line.trim() !== '');
+                    //lines = extractedText.split('\n').filter(line => line.trim() !== '');
                     
                 } catch (error) {
                     console.error('Error processing PDF:', error);
