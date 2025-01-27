@@ -3,7 +3,7 @@
         import handleFileChange from './functions/handleFileChange';
         import extractTextFromFile from './functions/extractTextFromFile';
         //import dataFinder from './functions/dataFinder/dataFinder';
-        import { companiesData } from './data/companiesData';
+        //import { companiesData } from './data/companiesData';
          
         pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
           
