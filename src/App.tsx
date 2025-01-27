@@ -38,7 +38,7 @@
             }
 
             useEffect(() => {
-                const foundData = dataFinder(companiesData, text);
+                //const foundData = dataFinder(companiesData, text);
             
                 if (file) {
                     const download = async () => {
