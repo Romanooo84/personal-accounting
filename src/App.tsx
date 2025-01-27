@@ -2,7 +2,7 @@
         import * as pdfjsLib from 'pdfjs-dist';
         import handleFileChange from './functions/handleFileChange';
         import extractTextFromFile from './functions/extractTextFromFile';
-        import dataFinder from './functions/dataFinder/dataFinder';
+        //import dataFinder from './functions/dataFinder/dataFinder';
         import { companiesData } from './data/companiesData';
          
         pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
@@ -96,7 +96,7 @@
             
                     handleFileProcessing(); // Trigger the file processing.
                 }
-            }, [text, file, companiesData, setFoundInvoiceData]); // Add all relevant dependencies.
+            }, [text, file, setFoundInvoiceData]); // Add all relevant dependencies.
             
 
 
