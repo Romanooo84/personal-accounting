@@ -106,7 +106,8 @@
             
                     const handleFileProcessing = async () => {
                         const downloadedData = await download(); // Assign the result to a variable.
-                        if (downloadedData) {
+                        console.log(downloadedData[0].data)
+                        if (downloadedData&&downloadedData[0].data) {
                             const display = downloadedData.map((data:DownloadData, index:number) => {
                                 return (
                                     <div key={index}>
@@ -134,6 +135,13 @@
                                 );
                             });
                             setFoundInvoiceData(display); // Update state with the display content.
+                        }
+                        else{
+                            const display=
+                            <div>
+                                <p> nie udało sie odczytac danych z pliku</p>
+                            </div>
+                            setFoundInvoiceData(display)
                         }
                     };
             
