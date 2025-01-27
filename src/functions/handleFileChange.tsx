@@ -4,6 +4,7 @@ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 
     if (event.target.files && event.target.files[0]) {
         file = event.target.files[0];
+        console.log(event.target.files)
         if (file) {
             const fileExtension = file.name.split('.').pop()?.toLowerCase();
             if (fileExtension === 'pdf') {
