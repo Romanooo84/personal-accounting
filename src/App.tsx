@@ -22,7 +22,18 @@
             };
         }
 
-        const questionList=['kwotę faktury', 'termin płatności', 'nazwę kontrachenta', 'datę faktury']
+        interface DataToSend {
+            [key: string]: {
+                name: string[];
+                paymentText: string[];
+                valueText: string[];
+                invoiceNo: string[];
+                invoiceDate: string[];
+                fullName: string;
+            };
+        }
+
+        const questionList=['numer faktury','kwotę faktury', 'termin płatności', 'nazwę kontrachenta', 'datę faktury']
 
         const App = () => {
             const [file, setFile] = useState<uploadedFile | null>(null);
@@ -33,6 +44,8 @@
             const [foundInvoiceData, setFoundInvoiceData] = useState<JSX.Element | null>(null);
             const [searchDataList, setSearchDataList]=useState<string[] |null>(null)
             const [question, setQuestion] =useState<string |null>('numer faktury')
+            const [clickedToExtract, setClickedToExtract] = useState<boolean>(false)
+            const [info, setInfo]=useState<JSX.Element | null>(null);
             
             
 
@@ -41,6 +54,8 @@
                     const fileArray = Array.from(event.target.files);  // Convert FileList to an array of File objects
                     console.log(fileArray)
                     setFile({ files: fileArray });  // Update state with the actual files
+                    setClickedToExtract(true)
+                    setMatchedValue([])
                 }
             };
 
@@ -48,36 +63,92 @@
                 const buttonValue= e.target as HTMLButtonElement
                 setValue(buttonValue.textContent)
             }
+
+            const sendData = useCallback(async (data: DataToSend)=>{
+                //console.log(data)
+                try {
+                    console.log('wysyłam plik');
+                    const response = await fetch('http://localhost:3000/newCompanyData', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json', // Dodaj nagłówek
+                        },
+                        body: JSON.stringify(data),
+                    });
+                    console.log(data)
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Plik wysłany pomyślnie:', result);
+                        return result.files; // Zwróć pliki, jeśli serwer je obsługuje
+                    } else {
+                        console.error('Błąd podczas wysyłania:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Wystąpił błąd:', error);
+                }
+            },[])
       
             useEffect(()=>{
-                if(value&&searchDataList){
+                if(value&&searchDataList&&matchedValue.length<5){
+                let stop=false
                 for (let i =0; i<searchDataList.length; i++){
                     if (value===searchDataList[i]){
-                        let tempMatchedValue: string[] = matchedValue; 
+                        console.log(2)
+                        const tempMatchedValue: string[] = matchedValue; 
                         tempMatchedValue.push(searchDataList[i-1])
+                        const length:number=tempMatchedValue.length
                         setMatchedValue(tempMatchedValue)
-                        const listLength=tempMatchedValue.length
-                        setQuestion(questionList[length])
                         console.log(tempMatchedValue)
-                        if (tempMatchedValue.length===questionList.length+1){
+                        console.log(questionList[length])
+                        const information = 
+                        <>
+                            <p> nie udało sie odczytac danych z pliku</p>
+                            <p> zaznacz {questionList[length]}</p>
+                        </>
+                        setInfo(information)
+                        if (tempMatchedValue.length===questionList.length){
+                            const dataToSend = {
+                                [tempMatchedValue[3]]:{
+                                    name: [tempMatchedValue[3]],
+                                    paymentText: [ tempMatchedValue[2]],
+                                    valueText: [tempMatchedValue[1]],
+                                    invoiceNo: [tempMatchedValue[0]],
+                                    invoiceDate:[tempMatchedValue[4]],
+                                    fullName:tempMatchedValue[3]
+                                }}
+                            console.log(dataToSend)
                             setQuestion(questionList[0])
-                            setMatchedValue([])
-
+                            console.log(matchedValue)
+                            stop=true
+                            const information = 
+                            <>
+                                <p> Wszystkie dane zostały zapisane. Kliknij aby wysłać</p>
+                                <button
+                                    onClick={() => {
+                                        console.log('Przekazywane dane:', dataToSend);
+                                        sendData(dataToSend);
+                                    }}
+                                > 
+                                Wyślij dane do weryfikacji
+                            </button>      
+                            </>
+                            setInfo(information)
                         }
                         break
                     }
-                    
+                    if (stop){break}
                 }
                 
             }
-            },[value,searchDataList])
+            },[value,searchDataList,matchedValue, sendData])
 
 
             useEffect(() => {
-                
-                if (file) {
+                if (file&&clickedToExtract===true) {
+                    setClickedToExtract(false)
                     const imagefile:string[] = []; // Tablica dla URL-i plików
                     let tempImageFile: JSX.Element[] = [];
+
                     const download = async () => {
                         const formData = new FormData();
                         Array.from(file.files).forEach((fileItem) => {
@@ -134,8 +205,8 @@
             
                     const handleFileProcessing = async () => {
                         const downloadedData = await download(); // Assign the result to a variable.
-                        console.log(downloadedData&&downloadedData[0].data)
-                        if (downloadedData&&downloadedData[0].data && downloadedData&&downloadedData[0].data.data!=null) {
+                        const fail = downloadedData[0].data.name
+                        if (downloadedData&&fail) {
                             const display = downloadedData.map((data:DownloadData, index:number) => {
                                 return (
                                     <div key={index}>
@@ -166,9 +237,15 @@
                         }
                         else{
                             let temptext = downloadedData&&downloadedData[0].data.foundText
+                            console.log(temptext)
                             temptext = temptext.filter((text:string)=>text!='')
                             console.log(temptext)
                             setSearchDataList(temptext)
+                            const information = 
+                                <>
+                                    <p> nie udało sie odczytac danych z pliku</p>
+                                    <p> zaznacz {question}</p>
+                                </>
                             const displayText = temptext.map((value:[], index:number) => (
                                     <button 
                                     key={index}
@@ -179,17 +256,16 @@
                                 ));
                             const display=
                                 <div>
-                                    <p> nie udało sie odczytac danych z pliku</p>
-                                    <p> zaznacz {question}</p>
                                     <div>{displayText}</div>
                                 </div>
-                            
+
+                            setInfo(information)
                             setFoundInvoiceData(display)
                         }
                     };
                     handleFileProcessing(); // Trigger the file processing.
                 }
-            }, [ file, setFoundInvoiceData, question]); // Add all relevant dependencies.
+            }, [ file, setFoundInvoiceData, question, clickedToExtract]); // Add all relevant dependencies.
             
 
 
@@ -202,6 +278,7 @@
                     <div className={css.showData}>
                         <div>
                             <h2>Found Invoice Data:</h2>
+                            {info}
                             {foundInvoiceData}
                         </div>
                         <div>
