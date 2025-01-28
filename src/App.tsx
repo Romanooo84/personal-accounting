@@ -1,4 +1,4 @@
-        import React, { useEffect, useState } from 'react';
+        import React, { useEffect, useState, useCallback } from 'react';
         import * as pdfjsLib from 'pdfjs-dist';
         import css from './app.module.css'
         //import handleFileChange from './functions/handleFileChange';
@@ -21,13 +21,18 @@
                 invoiceDate: string;
             };
         }
+
+        const questionList=['kwotę faktury', 'termin płatności', 'nazwę kontrachenta', 'datę faktury']
+
         const App = () => {
             const [file, setFile] = useState<uploadedFile | null>(null);
-            //const [text, setText] = useState<string[]>([])
+            const [value, setValue] = useState<string | null>(null)
             //const [loading, setLoading] = useState(false);
             const [imageUrl, setImageUrl] = useState<JSX.Element | JSX.Element[] | null>(null)
-            ////const [fileType, setFileType] = useState<string>('')
+            const [matchedValue, setMatchedValue] =useState<string[]>([])
             const [foundInvoiceData, setFoundInvoiceData] = useState<JSX.Element | null>(null);
+            const [searchDataList, setSearchDataList]=useState<string[] |null>(null)
+            const [question, setQuestion] =useState<string |null>('numer faktury')
             
             
 
@@ -39,27 +44,48 @@
                 }
             };
 
+            const onClick = (e: React.MouseEvent<HTMLButtonElement>)=>{
+                const buttonValue= e.target as HTMLButtonElement
+                setValue(buttonValue.textContent)
+            }
+      
+            useEffect(()=>{
+                if(value&&searchDataList){
+                for (let i =0; i<searchDataList.length; i++){
+                    if (value===searchDataList[i]){
+                        let tempMatchedValue: string[] = matchedValue; 
+                        tempMatchedValue.push(searchDataList[i-1])
+                        setMatchedValue(tempMatchedValue)
+                        const listLength=tempMatchedValue.length
+                        setQuestion(questionList[length])
+                        console.log(tempMatchedValue)
+                        if (tempMatchedValue.length===questionList.length+1){
+                            setQuestion(questionList[0])
+                            setMatchedValue([])
+
+                        }
+                        break
+                    }
+                    
+                }
+                
+            }
+            },[value,searchDataList])
+
 
             useEffect(() => {
                 
                 if (file) {
                     const imagefile:string[] = []; // Tablica dla URL-i plików
                     let tempImageFile: JSX.Element[] = [];
-// Tymczasowa zmienna do renderowania
-
                     const download = async () => {
                         const formData = new FormData();
-
-                        // Iteruj przez pliki
                         Array.from(file.files).forEach((fileItem) => {
                             formData.append('files', fileItem, fileItem.name);
                             console.log(fileItem);
-
-                            // Twórz URL dla każdego pliku i dodaj do tablicy
                             imagefile.push(URL.createObjectURL(fileItem));
                         });
 
-                        // Renderowanie w zależności od typu pliku
                         tempImageFile = imagefile.map((fileURL, index) => {
                             const fileItem = file.files[index]; // Pobierz oryginalny plik
                             if (fileItem.type === 'image/jpeg') {
@@ -103,11 +129,13 @@
                         }
                     };
 
+           
+
             
                     const handleFileProcessing = async () => {
                         const downloadedData = await download(); // Assign the result to a variable.
-                        console.log(downloadedData[0].data)
-                        if (downloadedData&&downloadedData[0].data) {
+                        console.log(downloadedData&&downloadedData[0].data)
+                        if (downloadedData&&downloadedData[0].data && downloadedData&&downloadedData[0].data.data!=null) {
                             const display = downloadedData.map((data:DownloadData, index:number) => {
                                 return (
                                     <div key={index}>
@@ -137,17 +165,31 @@
                             setFoundInvoiceData(display); // Update state with the display content.
                         }
                         else{
+                            let temptext = downloadedData&&downloadedData[0].data.foundText
+                            temptext = temptext.filter((text:string)=>text!='')
+                            console.log(temptext)
+                            setSearchDataList(temptext)
+                            const displayText = temptext.map((value:[], index:number) => (
+                                    <button 
+                                    key={index}
+                                    onClick={onClick}
+                                    >
+                                        {value}
+                                    </button>
+                                ));
                             const display=
-                            <div>
-                                <p> nie udało sie odczytac danych z pliku</p>
-                            </div>
+                                <div>
+                                    <p> nie udało sie odczytac danych z pliku</p>
+                                    <p> zaznacz {question}</p>
+                                    <div>{displayText}</div>
+                                </div>
+                            
                             setFoundInvoiceData(display)
                         }
                     };
-            
                     handleFileProcessing(); // Trigger the file processing.
                 }
-            }, [ file, setFoundInvoiceData]); // Add all relevant dependencies.
+            }, [ file, setFoundInvoiceData, question]); // Add all relevant dependencies.
             
 
 
