@@ -46,7 +46,7 @@
             const [searchDataList, setSearchDataList]=useState<string[] |null>(null)
             const [question, setQuestion] =useState<string |null>('numer faktury')
             const [clickedToExtract, setClickedToExtract] = useState<boolean>(false)
-            const [info, setInfo]=useState<JSX.Element | null>(null);
+            const [info, setInfo]=useState<JSX.Element>();
             
             
 
@@ -142,7 +142,7 @@
                 }
                 
             }
-            },[value,searchDataList,matchedValue, sendData])
+            },[value,searchDataList,matchedValue, sendData, keyData])
 
 
             useEffect(() => {
@@ -178,8 +178,10 @@
                             return <div>wrong file</div>
                             }
                         });
+                        
+                        const tempInfo=<div></div>
+                        setInfo(tempInfo)
                         setImageUrl(tempImageFile); 
-                        setInfo('')
 
                         try {
                             console.log('wysyłam');
