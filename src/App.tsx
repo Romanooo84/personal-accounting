@@ -1,10 +1,6 @@
         import React, { useEffect, useState, useCallback } from 'react';
         import * as pdfjsLib from 'pdfjs-dist';
         import css from './app.module.css'
-        //import handleFileChange from './functions/handleFileChange';
-        //import extractTextFromFile from './functions/extractTextFromFile';
-        //import dataFinder from './functions/dataFinder/dataFinder';
-        //import { companiesData } from './data/companiesData';
          
         pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.worker.mjs';
 
@@ -33,7 +29,7 @@
             };
         }
 
-        const questionList=['numer faktury','kwotę faktury', 'termin płatności', 'nazwę kontrachenta', 'datę faktury']
+        const questionList=['nazwę kontrachenta','numer faktury','kwotę faktury', 'termin płatności', 'datę faktury']
 
         const App = () => {
             const [file, setFile] = useState<uploadedFile | null>(null);
@@ -41,12 +37,14 @@
             const [keyData, setKeyData] = useState<number>(0)
             //const [loading, setLoading] = useState(false);
             const [imageUrl, setImageUrl] = useState<JSX.Element | JSX.Element[] | null>(null)
-            const [matchedValue, setMatchedValue] =useState<string[]>([])
+            const [matchedValue, setMatchedValue] =useState<string[][]>([])
             const [foundInvoiceData, setFoundInvoiceData] = useState<JSX.Element | null>(null);
             const [searchDataList, setSearchDataList]=useState<string[] |null>(null)
-            const [question, setQuestion] =useState<string |null>('numer faktury')
+            const [question, setQuestion] =useState<string |null>(questionList[0])
             const [clickedToExtract, setClickedToExtract] = useState<boolean>(false)
+            const [clicedToMatched, setClickedToMatched] = useState<boolean>(false)
             const [info, setInfo]=useState<JSX.Element>();
+            const [name, setName]=useState<string>('')
             
             
 
@@ -55,7 +53,7 @@
                     const fileArray = Array.from(event.target.files);  // Convert FileList to an array of File objects
                     setFile({ files: fileArray }); 
                     setClickedToExtract(true)
-                    setMatchedValue([])
+                    //setMatchedValue([])
                 }
             };
 
@@ -64,6 +62,7 @@
                 const buttonKey = e.currentTarget.dataset.key ? parseInt(e.currentTarget.dataset.key) : 0
                 setValue(buttonValue.textContent)
                 setKeyData(buttonKey)
+                setClickedToMatched(true)
             }
 
             const sendData = useCallback(async (data: DataToSend)=>{
@@ -91,15 +90,18 @@
             },[])
       
             useEffect(()=>{
-                if(value&&searchDataList&&matchedValue.length<5){
+                if(value&&searchDataList&&clicedToMatched&&matchedValue.length<5){
                 let stop=false
+                setClickedToMatched(false)
+                const tempMatchedValue:  string[][]= matchedValue; 
+                if(tempMatchedValue.length===0) {setName(searchDataList[keyData+1])}
+                console.log(name)
                 for (let i =0; i<searchDataList.length; i++){
                     if (value===searchDataList[i]){
-                        console.log(2)
-                        const tempMatchedValue: string[] = matchedValue; 
-                        tempMatchedValue.push(searchDataList[keyData])
-                        const length:number=tempMatchedValue.length
+                        const machedData: string[] = [searchDataList[keyData - 1], searchDataList[keyData]];
+                        tempMatchedValue.push(machedData);
                         setMatchedValue(tempMatchedValue)
+                        const length:number=tempMatchedValue.length
                         console.log(tempMatchedValue)
                         console.log(questionList[length])
                         const information = 
@@ -110,17 +112,17 @@
                         setInfo(information)
                         if (tempMatchedValue.length===questionList.length){
                             const dataToSend = {
-                                [tempMatchedValue[3]]:{
-                                    name: [tempMatchedValue[3]],
-                                    paymentText: [ tempMatchedValue[2]],
-                                    valueText: [tempMatchedValue[1]],
-                                    invoiceNo: [tempMatchedValue[0]],
-                                    invoiceDate:[tempMatchedValue[4]],
-                                    fullName:tempMatchedValue[3]
-                                }}
+                                [name]: {
+                                    name: tempMatchedValue[3] ?? [], // Ensure it's string[]
+                                    paymentText: tempMatchedValue[3] ?? [],
+                                    valueText: tempMatchedValue[2] ?? [],
+                                    invoiceNo: tempMatchedValue[1] ?? [],
+                                    invoiceDate: tempMatchedValue[4] ?? [],
+                                    fullName: name,
+                                },}
                             console.log(dataToSend)
                             setQuestion(questionList[0])
-                            console.log(matchedValue)
+                            console.log(tempMatchedValue)
                             stop=true
                             const information = 
                             <>
@@ -142,7 +144,7 @@
                 }
                 
             }
-            },[value,searchDataList,matchedValue, sendData, keyData])
+            },[value,searchDataList, sendData, keyData, matchedValue, clicedToMatched, name])
 
 
             useEffect(() => {
