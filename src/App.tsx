@@ -38,6 +38,7 @@
         const App = () => {
             const [file, setFile] = useState<uploadedFile | null>(null);
             const [value, setValue] = useState<string | null>(null)
+            const [keyData, setKeyData] = useState<number>(0)
             //const [loading, setLoading] = useState(false);
             const [imageUrl, setImageUrl] = useState<JSX.Element | JSX.Element[] | null>(null)
             const [matchedValue, setMatchedValue] =useState<string[]>([])
@@ -52,8 +53,7 @@
             const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                 if (event.target.files) {
                     const fileArray = Array.from(event.target.files);  // Convert FileList to an array of File objects
-                    console.log(fileArray)
-                    setFile({ files: fileArray });  // Update state with the actual files
+                    setFile({ files: fileArray }); 
                     setClickedToExtract(true)
                     setMatchedValue([])
                 }
@@ -61,7 +61,9 @@
 
             const onClick = (e: React.MouseEvent<HTMLButtonElement>)=>{
                 const buttonValue= e.target as HTMLButtonElement
+                const buttonKey = e.currentTarget.dataset.key ? parseInt(e.currentTarget.dataset.key) : 0
                 setValue(buttonValue.textContent)
+                setKeyData(buttonKey)
             }
 
             const sendData = useCallback(async (data: DataToSend)=>{
@@ -95,7 +97,7 @@
                     if (value===searchDataList[i]){
                         console.log(2)
                         const tempMatchedValue: string[] = matchedValue; 
-                        tempMatchedValue.push(searchDataList[i-1])
+                        tempMatchedValue.push(searchDataList[keyData])
                         const length:number=tempMatchedValue.length
                         setMatchedValue(tempMatchedValue)
                         console.log(tempMatchedValue)
@@ -160,15 +162,15 @@
                         tempImageFile = imagefile.map((fileURL, index) => {
                             const fileItem = file.files[index]; // Pobierz oryginalny plik
                             if (fileItem.type === 'image/jpeg') {
-                                return <img key={index} src={fileURL} alt="uploaded" />;
+                                return <img width='1200px' key={index} src={fileURL} alt="uploaded" />;
                             } else if (fileItem.type === 'application/pdf') {
                                 return (
                                     <embed
                                         key={index}
                                         src={fileURL}
-                                        width="100%"
-                                        height="500px"
                                         type="application/pdf"
+                                        className={css.imageFile}
+                                        height="700px"
                                     />
                                 );
                             }
@@ -176,10 +178,8 @@
                             return <div>wrong file</div>
                             }
                         });
-
-                        // Wyświetl wynik w konsoli i ustaw URL-e
-                        console.log(tempImageFile);
-                        setImageUrl(tempImageFile); // Funkcja do ustawiania stanu (zakładam React)
+                        setImageUrl(tempImageFile); 
+                        setInfo('')
 
                         try {
                             console.log('wysyłam');
@@ -210,25 +210,25 @@
                             const display = downloadedData.map((data:DownloadData, index:number) => {
                                 return (
                                     <div key={index}>
-                                        <div>
-                                            <p>Nazwa Firmy:</p>
-                                            <p>{data.data.name}</p>
+                                        <div className={css.invoiceInfo}>
+                                            <p className={css.invoiceInfoParagraph}>Nazwa Firmy:</p>
+                                            <p className={css.invoiceInfoParagraph}>{data.data.name}</p>
                                         </div>
-                                        <div>
-                                            <p>Numer faktury:</p>
-                                            <p>{data.data.invoiceNo}</p>
+                                        <div className={css.invoiceInfo}>
+                                            <p className={css.invoiceInfoParagraph}>Numer faktury:</p>
+                                            <p className={css.invoiceInfoParagraph}>{data.data.invoiceNo}</p>
                                         </div>
-                                        <div>
-                                            <p>Data faktury:</p>
-                                            <p>{data.data.invoiceDate}</p>
+                                        <div className={css.invoiceInfo}>
+                                            <p className={css.invoiceInfoParagraph}>Data faktury:</p>
+                                            <p className={css.invoiceInfoParagraph}>{data.data.invoiceDate}</p>
                                         </div>
-                                        <div>
-                                            <p>Kwota:</p>
-                                            <p>{data.data.value}</p>
+                                        <div className={css.invoiceInfo}>
+                                            <p className={css.invoiceInfoParagraph}>Kwota:</p>
+                                            <p className={css.invoiceInfoParagraph}>{data.data.value}</p>
                                         </div>
-                                        <div>
-                                            <p>Termin płatności:</p>
-                                            <p>{data.data.paymentDate}</p>
+                                        <div className={css.invoiceInfo}>
+                                            <p className={css.invoiceInfoParagraph}>Termin płatności:</p>
+                                            <p className={css.invoiceInfoParagraph}>{data.data.paymentDate}</p>
                                         </div>
                                     </div>
                                 );
@@ -248,15 +248,15 @@
                                 </>
                             const displayText = temptext.map((value:[], index:number) => (
                                     <button 
-                                    key={index}
+                                    data-key={index-1}
                                     onClick={onClick}
                                     >
                                         {value}
                                     </button>
                                 ));
                             const display=
-                                <div>
-                                    <div>{displayText}</div>
+                                <div className={css.invoiceInfo}>
+                                    <div className={css.newDataParagraph}>{displayText}</div>
                                 </div>
 
                             setInfo(information)
@@ -271,7 +271,7 @@
 
 
             return (
-                <div className="App">
+                <div className={css.mainDiv}>
                     <h1>Extract Text from PDF or Image</h1>
                     <input type="file" multiple accept=".pdf,image/*"  onChange={onChange} />
                     {foundInvoiceData && (
