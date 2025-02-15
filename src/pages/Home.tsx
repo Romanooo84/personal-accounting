@@ -3,7 +3,8 @@ import { Link } from "react-router-dom"
 const Home=()=>{
     return(
         <div>
-            <Link to={'analizafakturprzelewowych'}>Przeslij fakutrę przelewową</Link>
+            <Link to={'analizafaktur'}>Przeslij fakutrę przelewową</Link>
+            <Link to={'dodajfakture'}>Przeslij fakutrę gotówkową</Link>
         </div>
     )
 }

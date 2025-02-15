@@ -105,7 +105,7 @@ const AnalizingInvoices = () => {
 
         try {
             console.log('wysyłam');
-            const response = await fetch('https://organizerfaktur.pl/ask', {
+            const response = await fetch('http://localhost:3000/ask', {
                 method: 'POST',
                 body: formData,
             });
@@ -126,7 +126,7 @@ const AnalizingInvoices = () => {
 
 
     const handleFileProcessing = async () => {
-        const downloadedData = await download(); // Assign the result to a variable.
+        const downloadedData = await download(); 
         const fail = downloadedData[0].data.name
         if (downloadedData&&fail) {
             const display = downloadedData.map((data:DownloadData, index:number) => {
@@ -187,7 +187,6 @@ const AnalizingInvoices = () => {
     };
 
     const sendData = useCallback(async (data: DataToSend)=>{
-        //console.log(data)
         try {
             console.log('wysyłam plik');
             const response = await fetch('https://organizerfaktur.pl/newCompanyData', {
