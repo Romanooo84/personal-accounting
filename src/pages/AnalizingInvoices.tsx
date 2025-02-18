@@ -73,8 +73,22 @@ const AnalizingInvoices = () => {
     const clickIfCashInvoice=()=>{
         setValue('cash')
         setKeyData(4)
-        setClickedToMatched(true)
-
+        //setClickedToMatched(true)
+        const information = 
+                 <>
+                    <p> nie udało sie odczytac danych z pliku</p>
+                    {questionList[length] === questionList[3]?(
+                        <>
+                            <p> zaznacz {questionList[length]}</p>
+                            <p>lub kliknij przycisk jeżeli faktura jest gotówkowa</p>
+                            <button onClick={clickIfCashInvoice}>przycisk</button>
+                        </>
+                    ):(
+                        <p> zaznacz {questionList[length]}</p>
+                    )} 
+                </>
+                setInfo(information)
+        
     }
     const download = async () => {
         const formData = new FormData();
@@ -228,7 +242,6 @@ const AnalizingInvoices = () => {
         setClickedToMatched(false)
         const tempMatchedValue:  string[][]= matchedValue; 
         if(tempMatchedValue.length===0) {setName(searchDataList[keyData+1])}
-        console.log(name)
         for (let i =0; i<searchDataList.length; i++){
             if (value===searchDataList[i]){
                 const machedData: string[] = [searchDataList[keyData - 1], searchDataList[keyData]];
