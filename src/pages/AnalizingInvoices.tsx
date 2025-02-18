@@ -70,6 +70,12 @@ const AnalizingInvoices = () => {
         setClickedToMatched(true)
     }
 
+    const clickIfCashInvoice=()=>{
+        setValue('cash')
+        setKeyData(4)
+        setClickedToMatched(true)
+
+    }
     const download = async () => {
         const formData = new FormData();
         const imagefile:string[]=[]
@@ -159,14 +165,21 @@ const AnalizingInvoices = () => {
         }
         else{
             let temptext = downloadedData&&downloadedData[0].data.foundText
-            console.log(temptext)
             temptext = temptext.filter((text:string)=>text!='')
-            console.log(temptext)
             setSearchDataList(temptext)
+          
             const information = 
                 <>
                     <p> nie udało sie odczytac danych z pliku</p>
-                    <p> zaznacz {question}</p>
+                    {questionList[length] === questionList[3]?(
+                        <>
+                            <p> zaznacz {questionList[length]}</p>
+                            <p>lub kliknij przycisk jeżeli faktura jest gotówkowa</p>
+                            <button onClick={clickIfCashInvoice}>przycisk</button>
+                        </>
+                    ):(
+                        <p> zaznacz {questionList[length]}</p>
+                    )} 
                 </>
             const displayText = temptext.map((value:[], index:number) => (
                     <button 
@@ -222,12 +235,21 @@ const AnalizingInvoices = () => {
                 tempMatchedValue.push(machedData);
                 setMatchedValue(tempMatchedValue)
                 const length:number=tempMatchedValue.length
-                console.log(tempMatchedValue)
-                console.log(questionList[length])
+                if (questionList[length] === questionList[3]){
+                    console.log('jest równe')
+                }
                 const information = 
-                <>
+                 <>
                     <p> nie udało sie odczytac danych z pliku</p>
-                    <p> zaznacz {questionList[length]}</p>
+                    {questionList[length] === questionList[3]?(
+                        <>
+                            <p> zaznacz {questionList[length]}</p>
+                            <p>lub kliknij przycisk jeżeli faktura jest gotówkowa</p>
+                            <button onClick={clickIfCashInvoice}>przycisk</button>
+                        </>
+                    ):(
+                        <p> zaznacz {questionList[length]}</p>
+                    )} 
                 </>
                 setInfo(information)
                 if (tempMatchedValue.length===questionList.length){
@@ -251,11 +273,13 @@ const AnalizingInvoices = () => {
                             onClick={() => {
                                 console.log('Przekazywane dane:', dataToSend);
                                 sendData(dataToSend);
+                                
                             }}
                         > 
                         Wyślij dane do weryfikacji
                     </button>      
                     </>
+                    console.log(dataToSend)
                     setInfo(information)
                 }
                 break
