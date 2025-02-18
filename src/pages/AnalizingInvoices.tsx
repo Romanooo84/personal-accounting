@@ -70,26 +70,27 @@ const AnalizingInvoices = () => {
         setClickedToMatched(true)
     }
 
-    const clickIfCashInvoice=()=>{
-        setValue('cash')
-        setKeyData(4)
-        //setClickedToMatched(true)
+    const clickIfCashInvoice=useCallback(()=>{
+        const tempMatchedValue:  string[][]= matchedValue; 
+        const machedData: string[] = ['cash', 'cash'];
+        tempMatchedValue.push(machedData)
+        setMatchedValue(tempMatchedValue)
         const information = 
                  <>
                     <p> nie udało sie odczytac danych z pliku</p>
                     {questionList[length] === questionList[3]?(
                         <>
-                            <p> zaznacz {questionList[length]}</p>
+                            <p> zaznacz {questionList[4]}</p>
                             <p>lub kliknij przycisk jeżeli faktura jest gotówkowa</p>
                             <button onClick={clickIfCashInvoice}>przycisk</button>
                         </>
                     ):(
-                        <p> zaznacz {questionList[length]}</p>
+                        <p> zaznacz {questionList[4]}</p>
                     )} 
                 </>
                 setInfo(information)
         
-    }
+    },[matchedValue])
     const download = async () => {
         const formData = new FormData();
         const imagefile:string[]=[]
@@ -216,7 +217,7 @@ const AnalizingInvoices = () => {
     const sendData = useCallback(async (data: DataToSend)=>{
         try {
             console.log('wysyłam plik');
-            const response = await fetch('https://organizerfaktur.pl/newCompanyData', {
+            const response = await fetch('http://localhost:3000/newCompanyData', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json', // Dodaj nagłówek
@@ -241,6 +242,8 @@ const AnalizingInvoices = () => {
         let stop=false
         setClickedToMatched(false)
         const tempMatchedValue:  string[][]= matchedValue; 
+        console.log(tempMatchedValue.length)
+        console.log(matchedValue.length)
         if(tempMatchedValue.length===0) {setName(searchDataList[keyData+1])}
         for (let i =0; i<searchDataList.length; i++){
             if (value===searchDataList[i]){
@@ -268,7 +271,7 @@ const AnalizingInvoices = () => {
                 if (tempMatchedValue.length===questionList.length){
                     const dataToSend = {
                         [name]: {
-                            name: tempMatchedValue[3] ?? [], // Ensure it's string[]
+                            name: tempMatchedValue[0] ?? [], // Ensure it's string[]
                             paymentText: tempMatchedValue[3] ?? [],
                             valueText: tempMatchedValue[2] ?? [],
                             invoiceNo: tempMatchedValue[1] ?? [],
@@ -301,7 +304,7 @@ const AnalizingInvoices = () => {
         }
         
     }
-    },[value,searchDataList, sendData, keyData, matchedValue, clicedToMatched, name])
+    },[value,searchDataList, sendData, keyData, matchedValue, clicedToMatched, name, clickIfCashInvoice])
 
 
 
